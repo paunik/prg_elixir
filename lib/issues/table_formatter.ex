@@ -21,10 +21,12 @@ defmodule Issues.TableFormatter do
     end
 
     def printable(str) when is_binary(str), do: str
-    def printable(str), do: str
+    def printable(str), do: to_string(str)
 
     def widths_of(columns) do
-        for column <- columns, do: column |> map(&String.length/1) |> max
+        for column <- columns do
+            column |> map(&String.length/1) |> max
+        end
     end
 
     def format_for(column_widths) do

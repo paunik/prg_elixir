@@ -6,7 +6,7 @@ defmodule Issues.CLI do
     Handle parsing of CLI and dispatch further 
     to create table of last _n_ issues from GitHub repo 
     """
-    def run(argv) do
+    def main(argv) do
         argv
         |> parse_args
         |> process
