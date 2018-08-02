@@ -1,5 +1,8 @@
 defmodule Issues.CLI do
     import Issues.TableFormatter, only: [ print_table_for_columns: 2 ]
+    import SweetXml
+
+    require Logger
 
     @default_count 4
     @moduledoc """
@@ -13,9 +16,7 @@ defmodule Issues.CLI do
     end
 
     @doc """
-    `argv` can be called by -h or --help, which returns :help
-    Otherwise is github username and project name and optionally number of lines
-    Returns a touple of `{user, project, count}`, or :help if help was given
+    `argv` can be called by -h or --help, which returns :help, or :help if help was given
     """
     def parse_args(argv) do
         OptionParser.parse(argv, switches: [help: :boolean],
@@ -23,26 +24,21 @@ defmodule Issues.CLI do
         |> elem(1)
         |> args_to_internal_representation()
     end
-    def args_to_internal_representation([user, project, count]) do
-        { user, project, String.to_integer(count) }
-    end
-    def args_to_internal_representation([user, project]) do
-        { user, project, @default_count }
+    def args_to_internal_representation([location]) do
+        { location }
     end
     def args_to_internal_representation(_) do # bad arg or --help
         :help
     end
     def process(:help) do
         IO.puts """
-        usage: issues <user> <project> [ count | #{@default_count} ]
+        usage: process <location>
         """
     end
-    def process({user, project, count}) do
-        Issues.GithubIssues.fetch(user, project)
+    def process({location}) do
+        Issues.Weather.fetch(location)
         |> decode_response()
-        |> sort_into_descending_order()
-        |> last(count)
-        |> print_table_for_columns(["number", "created_at", "title"])
+        |> print_table_for_columns([:location, :weather])
     end
 
     def last(list, count) do
@@ -51,10 +47,17 @@ defmodule Issues.CLI do
         |> Enum.reverse
     end
 
-    def decode_response({:ok, body}), do: body 
+    def decode_response({:ok, body}) do
+        [
+            [
+                {:location, body |> SweetXml.xpath(~x"//current_observation/location/text()")},
+                {:weather, body |> SweetXml.xpath(~x"//current_observation/weather/text()")}
+            ]
+        ]
+    end
 
     def decode_response({:error, error}) do
-        IO.puts "Error fet=ching from GitHub: #{error["message"]}"
+        IO.puts "Error fetching from Weather Url: #{error["message"]}"
         System.halt(2)
     end
 

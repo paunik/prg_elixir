@@ -31,5 +31,8 @@ use Mix.Config
 config :issues,
     github_url: "https://api.github.com"
 
+config :weather,
+    weather_url: "http://w1.weather.gov/xml/current_obs"
+
 config :logger,
     compile_time_purge_level: :info
